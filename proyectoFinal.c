@@ -506,10 +506,23 @@ int Validador_color(){                                //////////////////////////
 void compartimiento(){
  PWM1_Start();                       // start PWM1
  PWM2_Start();                       // start PWM2
-
-   while(!PORTe.f0){
-    seguidor();
-   }
+ //
+ 
+  if (tareas[tarea][caja] == 1){                          //blanco
+     if (!RE0_bit && RE1_bit){     
+       while (RE1_bit){
+           seguidor();
+       }
+    }
+  }
+  if (tareas[tarea][caja] == 0){    
+     if (RE0_bit && !RE1_bit){     //negro
+        while (!RE1_bit){
+              seguidor();
+        }
+     }
+  }
+ 
  portD.f0=0;
  portD.f1=0;
  portD.f2=0;
@@ -521,7 +534,6 @@ void compartimiento(){
  portD.f2=0;
  portD.f3=1;
  delay_ms(150);
-
 
  PWM1_Stop();                       // stop PWM1
  PWM2_Stop();                       // stop PWM2
@@ -698,7 +710,6 @@ void main() {
       aux=0;
       while (1){
             menuPrincipal();
-            esperarInicio();
             enviar("VAMO A DARLE");
             while (tareas[0][estadoTarea]==1 || tareas[1][estadoTarea]==1 || tareas[2][estadoTarea]==1){
                   seguidor();
@@ -711,23 +722,18 @@ void main() {
                      if(cnt_estacion==5){enviar("PT5");}
                      if (cnt_estacion==tareas[tarea][estacion] && tareas[tarea][estadoTarea]==1){
                         if (tarea==0){
-                           enviar("haciendo tarea 1");
+                           enviar("Haciendo tarea 1");
                            tareas[tarea][estadoTarea]=0;
                         }
                         if (tarea==1){
-                           enviar("haciendo tarea 2");
+                           enviar("Haciendo tarea 2");
                            tareas[tarea][estadoTarea]=0;
                         }
                         if (tarea==2){
-                           enviar("haciendo tarea 3");
+                           enviar("Haciendo tarea 3");
                            tareas[tarea][estadoTarea]=0;
                         }
-                        //parada();
-                        portD.f0=0;
-                        portD.f1=0;
-                        portD.f2=0;
-                        portD.f3=0;
-                        delay_ms(2000);
+                        parada();
                         tarea++;
                         if (tarea>2){tarea=0;};
                         enviar("tarea completa");
@@ -749,5 +755,10 @@ void main() {
                      }
                   }
             }
+            enviar("Tareas Completadas");
+            portD.f0=0;
+            portD.f1=0;
+            portD.f2=0;
+            portD.f3=0;
       }
 }
