@@ -2,21 +2,21 @@
 #define estacion 1
 #define caja 2
 
-//pos 0 para tarea lista 
+//pos 0 para tarea lista
 //pos 1 para estacion
 //pos 2 para caja B/N
 
 int tareas[3][3]={{0,0,0},{0,0,0},{0,0,0}};
+
 char output[10]=" ";
 int recieve[5]={0,0,0,0,0};
-char txt[6]=" ";
 char mensaje=' ';
 int i=0,j=0;
 int tarea=0;
 
 
 
-void enviar(char send[20]){
+void enviar(char send[30]){
      UART1_Write_Text(send);
      Uart1_write(10);
      Uart1_write(13);
@@ -34,10 +34,14 @@ char esperarLetra(){
      return mensaje;
 }
 
-
-
 void esperarInicio(){
      int iniciar=1;
+     
+     portD.f0=0;
+     portD.f1=0;
+     portD.f2=0;
+     portD.f3=0;
+     
      enviar("Press I to start");
      do{
         if (UART1_Data_Ready()!=0){
@@ -62,6 +66,27 @@ void enviarEstadoTareas(){
                      if (i==2){
                         enviar("Tarea 3 Activa");
                      }
+                     if (tareas[i][estacion]==1){
+                        enviar("Estacion 1");   
+                     }
+                     if (tareas[i][estacion]==2){
+                        enviar("Estacion 2");   
+                     }
+                     if (tareas[i][estacion]==3){
+                        enviar("Estacion 3");   
+                     }
+                     if (tareas[i][estacion]==4){
+                        enviar("Estacion 4");   
+                     }
+                     if (tareas[i][estacion]==5){
+                        enviar("Estacion 5");   
+                     }
+                     if (tareas[i][caja]==1){
+                        enviar("Caja Blanca");   
+                     }
+                     if (tareas[i][caja]==0){
+                        enviar("Caja Negra");   
+                     }
                      break;
                 case 0:
                      if (i==0){
@@ -81,6 +106,15 @@ void enviarEstadoTareas(){
 void configTareas(int tarea) {
      int listo=0;
      tarea=tarea-1;
+     enviar("Como configurar?");
+     enviar("ejemplo: 31OK");
+     enviar("primer caracter indica la estacion ");
+     enviar("Min 1, Max 5");
+     enviar("Segundo caracter indica la caja");
+     enviar("1 para blanco");
+     enviar("0 para negro");
+     enviar("En mayusculas");
+     enviar("seguido de un OK para confirmar");
      if (tarea==0){
         enviar("configurando T1");
         tareas[tarea][estadoTarea]=1;
@@ -93,48 +127,55 @@ void configTareas(int tarea) {
         enviar("configurando T3");
         tareas[tarea][estadoTarea]=1;
      }
-     
+
      do{
-        if (UART1_Data_Ready() == 1) {          // if data is received 
-           UART1_Read_Text(output, "OK", 10);    // reads text until 'OK' is found
+        if (UART1_Data_Ready() == 1) {          // if data is received
+           UART1_Read_Text(output, "OK", 4);    // reads text until 'OK' is found
            recieve[0]=(output[0]-48);
            recieve[1]=(output[1]-48);
            switch (recieve[0]){
-                  case 1: 
+                  case 1:
                        tareas[tarea][estacion]=1;
                        enviar("Estacion 1");
                        break;
-                  case 2: 
+                  case 2:
                        tareas[tarea][estacion]=2;
                        enviar("Estacion 2");
                        break;
-                  case 3: 
+                  case 3:
                        tareas[tarea][estacion]=3;
                        enviar("Estacion 3");
                        break;
-                  case 4: 
+                  case 4:
                        tareas[tarea][estacion]=4;
                        enviar("Estacion 4");
-                       break; 
-                  case 5: 
+                       break;
+                  case 5:
                        tareas[tarea][estacion]=5;
                        enviar("Estacion 5");
-                       break;  
+                       break;
+                  default:
+                          tareas[tarea][estacion]=1;
+                          enviar("Estacion por defecto");
            }
            switch (recieve[1]){
-                  case 1: 
+                  case 1:
                        tareas[tarea][caja]=1;
-                       enviar("Color blanco");
+                       enviar("Caja Blanca");
                        break;
-                  case 0: 
+                  case 0:
                        tareas[tarea][caja]=0;
-                       enviar("Color Negro");
-                       break;   
-           } 
+                       enviar("Caja Negra");
+                       break;
+                  default:
+                          tareas[tarea][caja]=0;
+                          enviar("Caja por defecto");
+           }
            listo=1;
         }
      }while(listo==0);
 }
+
 void menuPrincipal(){
      char opc=' ';
      int inicio=1;
@@ -151,6 +192,10 @@ void menuPrincipal(){
            enviar("minimo 0");
            enviar("maximo 3");
            opc=esperarLetra();
+           if (opc=='0'){
+              enviar("Quien quiere 0 tareas?");
+              enviar("no me agradas");
+           }
            if (opc == '1'){
               configTareas(1);
            }
@@ -168,9 +213,89 @@ void menuPrincipal(){
            enviarEstadoTareas();
         }
         if (opc=='c' || opc=='C'){
+           if (tareas[0][estadoTarea]==1 || tareas[1][estadoTarea]==1 || tareas[2][estadoTarea]==1){
+              inicio=0;
+           }else{
+                 enviar("Yo no tengo nada que hacer");
+                 enviar("Dejame aqui quietesita mejor");
+           }
+        }
+     }while(inicio);
+}
+void menuSegundario(){
+     char opc=' ';
+     int inicio=1;
+     do{
+        enviar("Que desea hacer?");
+        enviar("A. seguir camellando");
+        enviar("B. agregar tarea");
+        enviar("C. modificar tarea");
+        enviar("D. ver estado de tareas");
+        opc=esperarLetra();
+        if (opc=='a' || opc=='A'){
            inicio=0;
         }
-     }while(inicio);             
+        if (opc=='b' || opc=='B'){
+           if (tareas[0][estadoTarea]==1 && tareas[1][estadoTarea]==1 && tareas[2][estadoTarea]==1){
+              enviar("No puedes agregar tareas");
+              enviar("Ya estan estas tareas");
+              enviarEstadoTareas();
+           }
+           if (tareas[0][estadoTarea]==0 && tareas[1][estadoTarea]==1 && tareas[2][estadoTarea]==1){
+              enviar("Agregamos Tarea 1");
+              configTareas(1);
+           }
+           if (tareas[0][estadoTarea]==0 && tareas[1][estadoTarea]==0 && tareas[2][estadoTarea]==1){
+              enviar("Agregamos Tarea 1 y 2");
+              configTareas(1);
+              configTareas(2);
+           }
+           if (tareas[0][estadoTarea]==0 && tareas[1][estadoTarea]==0 && tareas[2][estadoTarea]==0){
+              enviar("Agregamos Tarea 1, 2 y 3");
+              configTareas(1);
+              configTareas(2);
+              configTareas(3);
+           }
+           if (tareas[0][estadoTarea]==1 && tareas[1][estadoTarea]==0 && tareas[2][estadoTarea]==0){
+              enviar("Agregamos Tarea 2");
+              configTareas(2);
+           }
+           if (tareas[0][estadoTarea]==1 && tareas[1][estadoTarea]==1 && tareas[2][estadoTarea]==0){
+              enviar("Agregamos Tarea 2");
+              configTareas(3);
+           }
+           
+        }
+        if (opc=='c' || opc=='C'){
+           enviarEstadoTareas();
+           enviar("Cual desea modificar?");
+           enviar("1. Tarea 1");
+           enviar("2. Tarea 2");
+           enviar("3. Tarea 3");
+           opc=esperarLetra();
+           if (opc=='1'){
+              configTareas(1);
+           }
+           if (opc=='2'){
+              configTareas(2);
+           }
+           if (opc=='3'){
+              configTareas(3);
+           }
+           if (tareas[0][estadoTarea]==1){
+              tarea=0;
+           }
+           if (tareas[0][estadoTarea]==0 && tareas[1][estadoTarea]==1){
+              tarea=1;
+           }
+           if (tareas[0][estadoTarea]==0 && tareas[1][estadoTarea]==0 && tareas[2][estadoTarea]==1){
+              tarea=2;
+           }
+        }
+        if (opc=='d' || opc=='D'){
+           enviarEstadoTareas();
+        }
+     }while(inicio);
 }
 
 double red,green,blue,Of;           //  sensor color
@@ -221,6 +346,7 @@ void seguidor(){                //b7 derecho y b6 izquierdo
        portD.f1=0;
        portD.f2=0;
        portD.f3=0;
+       enviar("Final de pista");
        esperarInicio();
     }
 }
@@ -402,24 +528,22 @@ switch(color){
 }
 
 void Canicas(){
-
- if(red>green && red>blue && green<blue){     //ROJO
-
-  if(auxrojo==0){
-   color=1;
-   auxrojo++;
-   servo1(color, aux);
-  }else{
-   if(auxrojo==1){     //color repetido rojo
-    color=5;
-    servo2(color, aux);
-    auxrojo=0;
-   }
-  }
+     if (red>green && red>blue && green<blue){     //ROJO
+        enviar("Color Rojo");
+        if (auxrojo==0){
+           color=1;
+           auxrojo++;
+           servo1(color, aux);
+        }else{
+              if (auxrojo==1){     //color repetido rojo
+                 color=5;
+                 servo2(color, aux);
+                 auxrojo=0;
+              }
+        }
  }
-
  if( (red<70 && blue>red && blue<50 && green>30)||(green>red && green>blue) ){     //VERDE
-
+  enviar("Color Verde");
   if(auxverde==0){
    color=2;
    auxverde++;
@@ -434,7 +558,7 @@ void Canicas(){
  }
 
  if(red>blue && green>blue && red>green && red>140 && green>80){     //AMARILLO
-
+ enviar("Color Amarillo");
   if(auxama==0){
    color=3;
    auxama++;
@@ -449,7 +573,7 @@ void Canicas(){
  }
 
  if(blue>red && blue>green && blue>70){     //AZUL
-
+  enviar("Color Azul");
   if(auxazul==0){
    color=4;
    auxazul++;
@@ -464,8 +588,6 @@ void Canicas(){
  }
  delay_ms(2000);
 }
-
-
 
 int Validador_color(){                                ////////////////////////////////////////////////////////
   int ok=0;
@@ -507,22 +629,22 @@ void compartimiento(){
  PWM1_Start();                       // start PWM1
  PWM2_Start();                       // start PWM2
  //
- 
+
   if (tareas[tarea][caja] == 1){                          //blanco
-     if (!RE0_bit && RE1_bit){     
+     if (!RE0_bit && RE1_bit){
        while (RE1_bit){
            seguidor();
        }
     }
   }
-  if (tareas[tarea][caja] == 0){    
+  if (tareas[tarea][caja] == 0){
      if (RE0_bit && !RE1_bit){     //negro
         while (!RE1_bit){
               seguidor();
         }
      }
   }
- 
+
  portD.f0=0;
  portD.f1=0;
  portD.f2=0;
@@ -640,7 +762,7 @@ void conf_channels(){ //Conf. Sensor color
 }
 
 void parada(){
- 
+
   portD.f0=0;
   portD.f1=0;
   portD.f2=0;
@@ -653,14 +775,6 @@ void parada(){
   portD.f3=1;
   delay_ms(100);
 
-  /*while(tmp_muerto!=10){
-
-   reversa();
-   delay_ms(10);
-   tmp_muerto++;
-  }   */
-
-  delay_us(50);
   PWM1_Stop();                       // stop PWM1
   PWM2_Stop();                       // stop PWM2
 
@@ -677,7 +791,7 @@ void parada(){
 
 void main() {
      int tmp_muerto=0;
-     
+
      Adcon1=0x0f;
      conf_channels();
      timer0_init();
@@ -710,16 +824,21 @@ void main() {
       aux=0;
       while (1){
             menuPrincipal();
-            enviar("VAMO A DARLE");
+            enviar("mientras camello usted puede:");
+            enviar("T. ver estado de tareas");
+            enviar("E. parada de emergencia");
+            enviar("VAMO' A DARLE");
+            
             while (tareas[0][estadoTarea]==1 || tareas[1][estadoTarea]==1 || tareas[2][estadoTarea]==1){
                   seguidor();
                   if (RC0_bit){
                      cnt_estacion ++;
-                     if(cnt_estacion==1){enviar("PT1");}
-                     if(cnt_estacion==2){enviar("PT2");}
-                     if(cnt_estacion==3){enviar("PT3");}
-                     if(cnt_estacion==4){enviar("PT4");}
-                     if(cnt_estacion==5){enviar("PT5");}
+                     enviar("pase por");
+                     if(cnt_estacion==1){enviar("Estacion 1");}
+                     if(cnt_estacion==2){enviar("Estacion 2");}
+                     if(cnt_estacion==3){enviar("Estacion 3");}
+                     if(cnt_estacion==4){enviar("Estacion 4");}
+                     if(cnt_estacion==5){enviar("Estacion 5");}
                      if (cnt_estacion==tareas[tarea][estacion] && tareas[tarea][estadoTarea]==1){
                         if (tarea==0){
                            enviar("Haciendo tarea 1");
@@ -750,15 +869,46 @@ void main() {
                   }
                   if (UART1_Data_Ready()==1){
                      mensaje=UART1_read();
-                     if (mensaje=='C' || mensaje=='c' ){
-                        enviarEstadoTareas(); 
+                     if (mensaje=='t' || mensaje=='T' ){
+                        enviarEstadoTareas();
+                     }
+                     if (mensaje=='e' || mensaje=='E' ){
+                        enviar("parada de emergencia");
+                        menuSegundario();
+                        esperarInicio();
+                        enviar("VAMO' A DARLE");
                      }
                   }
             }
             enviar("Tareas Completadas");
+            enviar("ire al final");
             portD.f0=0;
             portD.f1=0;
             portD.f2=0;
             portD.f3=0;
+            if (cnt_estacion<=5){
+               do{
+                  seguidor();
+                  if (RC0_bit){
+                     cnt_estacion++;
+                     if(cnt_estacion<6){enviar("pase por");}
+                     if(cnt_estacion==1){enviar("Estacion 1");}
+                     if(cnt_estacion==2){enviar("Estacion 2");}
+                     if(cnt_estacion==3){enviar("Estacion 3");}
+                     if(cnt_estacion==4){enviar("Estacion 4");}
+                     if(cnt_estacion==5){enviar("Estacion 5");}
+                      while (tmp_muerto<=200){
+                              seguidor();
+                              delay_ms(10);
+                              tmp_muerto ++;
+                      }
+                      tmp_muerto=0;
+                  }
+               }while(cnt_estacion<5);
+               if (cnt_estacion==5){
+                  cnt_estacion=0;
+                  enviar("Llevame al inicio");
+               }
+            }
       }
 }
